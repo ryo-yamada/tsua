@@ -1,0 +1,17 @@
+body
+{
+    background:#d5d5d5;
+    width:30vw;
+    margin:20vh auto;
+    font-family:system-ui,sans-serif
+}
+
+h1
+{
+    font-size:1.5em
+}
+
+div
+{
+    opacity:0.8
+}
