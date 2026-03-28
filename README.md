@@ -18,7 +18,7 @@ e.g. `luarocks install luasocket`
 
 Basic example of a `server.lua` file (examples/ichi/server.lua):
 ```lua
-local Tsua = require("src.tsua")
+local Tsua = require("tsua")
 local app = Tsua.new()
 
 app:static("/static", "examples/ichi/static/")
