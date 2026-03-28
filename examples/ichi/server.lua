@@ -1,7 +1,7 @@
 local Tsua = require("tsua")
 local app = Tsua.new()
 
-app:static("/static", "examples/ichi/static/style.css")
+app:static("/static", "examples/ichi/static")
 
 app:get("/", function(req, res)
     res:serve("examples/ichi/frontend/index.html")

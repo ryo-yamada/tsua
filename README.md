@@ -21,7 +21,7 @@ Basic example of a `server.lua` file (examples/ichi/server.lua):
 local Tsua = require("tsua")
 local app = Tsua.new()
 
-app:static("/static", "examples/ichi/static/")
+app:static("/static", "examples/ichi/static")
 
 app:get("/", function(req, res)
     res:serve("examples/ichi/frontend/index.html")

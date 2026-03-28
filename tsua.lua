@@ -1,8 +1,13 @@
 local tsua = {}
 tsua.__index = tsua
 
-function tsua.new()
-    return setmetatable({ routes = {}, static_dirs = {} }, tsua)
+function tsua.new(config)
+    config = config or {}
+    return setmetatable({
+        routes = {},
+        static_dirs = {},
+        request_logging = config.request_logging ~= false, -- looks weird but it prevents unexpected behavior when setting a config
+    }, tsua)
 end
 
 local mime_types = {
@@ -77,6 +82,10 @@ function tsua:listen(port)
         if not request_line then -- deny weird clients
             client:close()
             goto continue
+        end
+
+        if self.request_logging == true then
+            print(request_line)
         end
 
         local method, path = request_line:match("^(%S+)%s+(%S+)") -- get method and the path
