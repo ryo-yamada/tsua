@@ -1,4 +1,10 @@
 # Changelogs
 
-### Version - v1.0
+### v1.0.1
+- Implemented POST
+- Updated examples
+- Implemented some error handling
+- Small code refactors
+
+### v1.0
 - Initial release

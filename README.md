@@ -6,7 +6,7 @@ An advantage that comes with using Tsua is that Lua's runtime is pretty small, s
 However, it mostly doesn't matter how fast a CPU can execute instructions if the context is a web server. The bottleneck is almost always I/O.
 
 ### IMPORTANT,
-Right now, the use of Tsua is discouraged, as I have not implemented it asynchronously. There are also a lot more things that must be implemented, such as POST request handling, and I am also afraid that the currently implemented security is not good enough to secure a more dynamic web application. For static sites however, there should be no security issues, but it can only handle a measly couple of people connecting at once due to it's synchronous nature. If you do still decide to host a website with this, I advise that you run it in a Docker container, as it isolates the application from the rest of the system. Everything that is currently planned to be implemented can be found in the roadmap at the bottom of this README.
+Right now, the use of Tsua is discouraged, as I have not implemented it asynchronously. There are also a lot more things that must be implemented, such as more HTTP method handling, and I am also afraid that the currently implemented security is not good enough to secure a more dynamic web application. For static sites however, there should be no security issues, but it can only handle a measly couple of people connecting at once due to it's synchronous nature. If you do still decide to host a website with this, I advise that you run it in a Docker container, as it isolates the application from the rest of the system. Everything that is currently planned to be implemented can be found in the roadmap at the bottom of this README.
 
 No dependencies beyond LuaSocket are required.
 
@@ -19,7 +19,7 @@ e.g. `luarocks install luasocket`
 Basic example of a `server.lua` file (examples/ichi/server.lua):
 ```lua
 local Tsua = require("tsua")
-local app = Tsua.new()
+local app = Tsua.new({ --[[request_logging = false]] })
 
 app:static("/static", "examples/ichi/static")
 
@@ -31,17 +31,27 @@ app:get("/otherpage", function(req, res)
     res:serve("examples/ichi/frontend/otherpage.html")
 end)
 
+app:post("/submit", function(req, res)
+    if req.params.name then
+        print(req.params.name)  -- "ryo"
+    end
+end)
+
 app:listen(19999) -- serve on http://localhost:19999/
 ```
 
 ### req and res objects
 Parse information about the request with *req*:
 ```lua
-req.method -- GET
-req.path -- /otherpage
-req.headers -- table of headers
+app:post("/sendcredentials", function(req, res)
+    req.method -- POST
+    req.path -- /sendcredentials
+    req.headers -- table of headers
+    req.body -- key1=abc&key2=123
+    req.params.key1 -- abc
+end)
 ```
-These are the only 3 objects that req contains (perhaps for now)
+These are the only objects that req contains.
 
 *res* wraps the raw socket and provides helper methods:
 ```lua
@@ -62,9 +72,8 @@ This framework is aimed towards sites that don't have too much dynamic functiona
 
 ## Todo
 - Implement async [TOP PRIORITY]
-- POST and DELETE handling
+- DELETE method handling
 - Query string parsing
-- More error handling
 - Documentation page that lists out all supported res methods, HTTP methods, etc
 
 *I am planning to be slightly hands-off on this project, because I want to invite people to open issues, pull requests and discuss changes. Contribute!*

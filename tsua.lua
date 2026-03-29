@@ -24,7 +24,7 @@ local mime_types = {
 
 local function get_mime(file_path)
     local ext = file_path:match("%.([^%.]+)$") -- i don't know how to use lua's spinoff of regex! ^_^
-    return mime_types[ext] or "application/octet-stream"  -- fallback for unknown types
+    return mime_types[ext] or "application/octet-stream" -- fallback for unknown types
 end
 
 local function build_response(status, headers, body) -- func to build http response for client browser
@@ -43,6 +43,22 @@ local function build_response(status, headers, body) -- func to build http respo
     return table.concat(lines, "\r\n")
 end
 
+local function url_decode(str) -- i don't know how decoding works! ^_^
+    str = str:gsub("+", " ")
+    str = str:gsub("%%(%x%x)", function(hex)
+        return string.char(tonumber(hex, 16))
+    end)
+    return str
+end
+
+local function parse_body(body)
+    local params = {}
+    for key, value in body:gmatch("([^&=]+)=([^&=]+)") do
+        params[url_decode(key)] = url_decode(value)
+    end
+    return params
+end
+
 local function send(client, status, headers, body) -- func to send http data
     status = status or "200 OK"
     headers = headers or {}
@@ -59,6 +75,10 @@ end
 -- compose GET
 function tsua:get(path, handler)
     self.routes["GET " .. path] = handler
+end
+
+function tsua:post(path, handler)
+    self.routes["POST " .. path] = handler
 end
 
 -- compose static serving
@@ -91,13 +111,13 @@ function tsua:listen(port)
         local method, path = request_line:match("^(%S+)%s+(%S+)") -- get method and the path
 
         if not method or not path then -- deny weird clients
-            send(client, "400 Bad Request", {["Content-Type"] = "text/plain"}, "400 Bad Request")
+            send(client, "400 Bad Request", { ["Content-Type"] = "text/plain" }, "400 Bad Request")
             client:close()
             goto continue
         end
 
         if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
-            send(client, "403 Forbidden", {["Content-Type"] = "text/plain"}, "403 Forbidden")
+            send(client, "403 Forbidden", { ["Content-Type"] = "text/plain" }, "403 Forbidden")
             client:close()
             goto continue
         end
@@ -106,13 +126,27 @@ function tsua:listen(port)
         local header_count = 0
         while header_count < 30 do -- parse headers, max of 30 to prevent malicious clients overloading the server
             local line = client:receive("*l")
-            if not line or line == "" then break end  -- blank line = end of headers
+            if not line or line == "" then break end -- blank line = end of headers
 
             local key, value = line:match("^([^:]+):%s*(.+)")
             if key and value then
-                headers[key:lower()] = value  -- lowercase keys for consistent lookups
+                headers[key:lower()] = value -- lowercase keys for consistent lookups
             end
             header_count = header_count + 1
+        end
+
+        local body = ""
+        local max_body = 1024 * 1024 -- max size of body 1MB, combats malicious clients
+        if method == "POST" then
+            local length = tonumber(headers["content-length"])
+            if length and length > 0 then
+                if length > max_body then
+                    send(client, "413 Content Too Large", { ["Content-Type"] = "text/plain" }, "request too large")
+                    client:close()
+                    goto continue
+                end
+                body = client:receive(length)
+            end
         end
 
         -- check static directories before route lookup
@@ -130,7 +164,7 @@ function tsua:listen(port)
                         ["Connection"] = "close"
                     }, content)
                 else
-                    send(client, "404 Not Found", {["Content-Type"] = "text/html"}, "<h1>404 Not Found</h1>")
+                    send(client, "404 Not Found", { ["Content-Type"] = "text/html" }, "<h1>404 Not Found</h1>")
                 end
 
                 client:close()
@@ -141,11 +175,11 @@ function tsua:listen(port)
         if static_handled then goto continue end
 
         local handler = self.routes[method .. " " .. path]
-        local req = { method = method, path = path, headers = headers }
+        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_body(body) or {} }
         local res = {}
 
-        function res:send(status, res_headers, body)
-            send(client, status, res_headers or {}, body or "")
+        function res:send(status, res_headers, res_body)
+            send(client, status, res_headers or {}, res_body or "")
         end
 
         function res:serve(file_path) -- serve html page
@@ -154,17 +188,21 @@ function tsua:listen(port)
             if file then
                 local content = file:read("*all")
                 file:close()
-                send(client, "200 OK", {["Content-Type"] = get_mime(file_path), ["Connection"] = "close"}, content)
+                self:send("200 OK", { ["Content-Type"] = get_mime(file_path), ["Connection"] = "close" }, content)
             else
-                send(client, "404 Not Found", {["Content-Type"] = "text/html"} , "<h1>404 Not Found</h1>")
+                self:send("404 Not Found", { ["Content-Type"] = "text/html" }, "<h1>404 Not Found</h1>")
             end
         end
 
         -- run route
         if handler then
-            handler(req, res)
+            local ok, err = pcall(handler, req, res)
+            if not ok then
+                send(client, "500 Internal Server Error", {["Content-Type"] = "text/plain"}, "internal server error")
+                print("handler error: " .. tostring(err))
+            end
         else
-            send(client, "404 Not Found", {["Content-Type"] = "text/html"}, "<h1>404 Not Found</h1>")
+            send(client, "404 Not Found", { ["Content-Type"] = "text/html" }, "<h1>404 Not Found</h1>")
         end
 
         client:close()
