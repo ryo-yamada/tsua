@@ -19,7 +19,11 @@ e.g. `luarocks install luasocket`
 Basic example of a `server.lua` file (examples/ichi/server.lua):
 ```lua
 local Tsua = require("tsua")
-local app = Tsua.new({ --[[request_logging = false]] })
+local app = Tsua.new({ -- init & config
+    max_headers = 15,
+    timeout = 2,
+    not_found = "examples/ichi/frontend/404.html"
+})
 
 app:static("/static", "examples/ichi/static")
 
@@ -62,6 +66,21 @@ end)
 app:get("/oldpage", function(req, res)
     res:send("301 Moved Permanently", {["Location"] = "/new-page"}, "") -- this one aswell !!
 end)
+```
+### Configuration
+You can configure an instance from the framework to according to how you want it to be.
+
+You can see how options are set in the `server.lua` example.
+
+These are all the configurable options and their defaults:
+```lua
+request_logging = config.request_logging ~= false, -- looks weird but it prevents unexpected behavior when setting a config, default is true
+max_body = config.max_body or (1024 * 1024), -- 1MB default max body in requests
+max_headers = config.max_headers or 30, -- default 30 max headers possible in requests
+timeout = config.timeout or 3, -- default 3s before dropping client
+not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
+forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
+error_handler = config.error_handler, -- custom error handler function config
 ```
 ---
 

@@ -1,5 +1,9 @@
 local Tsua = require("tsua")
-local app = Tsua.new({ --[[request_logging = false]] })
+local app = Tsua.new({ -- init & config
+    max_headers = 15,
+    timeout = 2,
+    not_found = "examples/ichi/frontend/404.html"
+})
 
 app:static("/static", "examples/ichi/static")
 
