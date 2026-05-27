@@ -1,12 +1,12 @@
 # Tsua - Tiny Lua webserver framework
 Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket. The framework allows you to achieve the goal of simply delivering files over HTTP and build a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
 
-An advantage that comes with using Tsua is that Lua's runtime is pretty small, so compared to something like Python's Flask, it uses significantly less system resources. Lua is also faster than Python in terms of raw execution speed. I'm also planning to try using LuaJIT some time soon, which will improve raw execution speed.
+An advantage that comes with using Tsua is that Lua's runtime is pretty small, so compared to something like Python's Flask, it uses significantly less system resources, which allows it to run well on something like a microcontroller, which is pretty cool. Lua is also faster than Python in terms of raw execution speed. I'm also planning to try using LuaJIT some time soon, which will improve raw execution speed.
 
 However, it mostly doesn't matter how fast a CPU can execute instructions if the context is a web server. The bottleneck is almost always I/O.
 
 ### IMPORTANT,
-Right now, the use of Tsua is discouraged, as I have not implemented it asynchronously. There are also a lot more things that must be implemented, such as more HTTP method handling, and I am also afraid that the currently implemented security is not good enough to secure a more dynamic web application. For static sites however, there should be no security issues, but it can only handle a measly couple of people connecting at once due to it's synchronous nature. If you do still decide to host a website with this, I advise that you run it in a Docker container, as it isolates the application from the rest of the system. Everything that is currently planned to be implemented can be found in the roadmap at the bottom of this README.
+Right now, the use of Tsua is only encouraged for static websites, where not much dynamic activity occurs. There are still a lot more things that must be implemented, such as more HTTP method handling, and I am also afraid that the currently implemented security is not good enough to secure a more dynamic web application. If you do decide to host a website with this, I advise that you run it in a Docker container, as it isolates the application from the rest of the system incase something does go wrong in security. Everything that is currently planned to be implemented can be found in the roadmap at the bottom of this README.
 
 No dependencies beyond LuaSocket are required.
 
@@ -90,7 +90,7 @@ This was a project I started just for fun, as I wanted to see how easy it would 
 This framework is aimed towards sites that don't have too much dynamic functionality. Portfolios, documentation, etc. However, I suppose when this framework continues development, it will probably be able to support more dynamic functionality.
 
 ## Todo
-- Implement async [TOP PRIORITY]
+- General codebase improvements
 - DELETE method handling
 - Query string parsing
 - Documentation page that lists out all supported res methods, HTTP methods, etc

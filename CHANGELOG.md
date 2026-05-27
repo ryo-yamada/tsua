@@ -1,5 +1,8 @@
 # Changelogs
 
+### v1.1
+- Implemented async, a single client no longer blocks everything
+
 ### v1.0.1.1
 - Allowed for more configuration
 - Improved logging

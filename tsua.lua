@@ -69,10 +69,8 @@ local function parse_body(body)
     return params
 end
 
-local status_code = "???"
 local function send(client, status, headers, body) -- func to send http data
     status = status or "200 OK" -- get the number
-    status_code = status:match("^(%d+)")
     headers = headers or {}
     body = body or ""
 
@@ -110,6 +108,158 @@ local function send_403(self, client)
     end
 end
 
+local function cleanup(sock, coroutines, birth_times, read_list)
+    coroutines[sock] = nil
+    birth_times[sock] = nil
+    for i, s in ipairs(read_list) do
+        if s == sock then
+            table.remove(read_list, i)
+            break
+        end
+    end
+    sock:close()
+end
+
+local function receive_line(client)
+    while true do
+        local line, err = client:receive("*l") -- get data (maybe lol)
+        if line then
+            return line  -- got data, return it
+        elseif err == "timeout" then
+            coroutine.yield()  -- no data yet, so maybe later
+        else
+            return nil  -- error, client's problem now LOL
+        end
+    end
+end
+
+local function receive_bytes(client, length) -- literally just almost the same thing as the function above
+    while true do
+        local data, err = client:receive(length)
+        if data then
+            return data
+        elseif err == "timeout" then
+            coroutine.yield()
+        else
+            return nil
+        end
+    end
+end
+
+local function handle_request(instance, client)
+    local status_code = "???" -- status code, should be set later on in the func
+
+    local function send_local(status, headers, body)
+        status_code = status:match("^(%d+)") -- moooooreeee reegeeeeex
+        send(client, status, headers, body)
+    end
+
+    local request_line = receive_line(client)  -- get request line
+    if not request_line then return end  -- deny weird clients
+
+    local method, path = request_line:match("^(%S+)%s+(%S+)") -- parse method and the path
+
+    if not method or not path then -- deny weird clients
+        send_local("400 Bad Request", { ["Content-Type"] = "text/plain" }, "400 Bad Request")
+        if instance.request_logging then print("??? ??? -> 400") end
+        return
+    end
+
+    if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
+        send_403(instance, client)
+        if instance.request_logging then print(method.." "..path.." -> 403") end
+        return
+    end
+
+    local headers = {}
+    local header_count = 0
+    while header_count < instance.max_headers do -- parse headers, max headers to prevent malicious clients overloading the server
+        local line = receive_line(client)
+        if not line or line == "" then break end -- blank line = end of headers
+
+        local key, value = line:match("^([^:]+):%s*(.+)")
+        if key and value then
+            headers[key:lower()] = value -- lowercase keys for consistent lookups
+        end
+        header_count = header_count + 1
+    end
+
+    local body = ""
+    if method == "POST" then -- parse body
+        local length = tonumber(headers["content-length"])
+        if length and length > 0 then
+            if length > instance.max_body then -- combats malicious clients
+                send_local("413 Content Too Large", { ["Content-Type"] = "text/plain" }, "413 Content Too Large")
+                if instance.request_logging then print(method.." "..path.." -> 413") end
+                return
+            end
+            body = receive_bytes(client, length) or ""
+        end
+    end
+
+    -- check static directories before route lookup
+    local static_handled = false
+    for prefix, dir in pairs(instance.static_dirs) do
+        if path:sub(1, #prefix) == prefix then
+            local file_path = dir .. path:sub(#prefix + 1)
+            local file = io.open(file_path, "rb")
+
+            if file then
+                local content = file:read("*all")
+                file:close()
+                send_local("200 OK", {
+                    ["Content-Type"] = get_mime(file_path),
+                    ["Connection"] = "close"
+                }, content)
+            else
+                send_404(instance, client)
+            end
+
+            static_handled = true
+            break
+        end
+    end
+
+    if not static_handled then -- create req and res objects
+        local handler = instance.routes[method .. " " .. path]
+        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_body(body) or {} }
+        local res = {}
+
+        function res:send(status, res_headers, res_body) -- send general data
+            send_local(status, res_headers or {}, res_body or "")
+        end
+
+        function res:serve(file_path) -- serve html page
+            local file = io.open(file_path, "rb")
+
+            if file then
+                local content = file:read("*all")
+                file:close()
+                self:send("200 OK", { ["Content-Type"] = get_mime(file_path), ["Connection"] = "close" }, content)
+            else
+                send_404(instance, client)
+            end
+        end
+
+        -- run route
+        if handler then
+            local ok, err = pcall(handler, req, res)
+            if not ok then
+                if instance.error_handler then
+                    instance.error_handler(err, req, res)
+                else
+                    send_local("500 Internal Server Error", {["Content-Type"] = "text/plain"}, "500 Internal Server Error")
+                    print("handler error: " .. tostring(err))
+                end
+            end
+        else
+            send_404(instance, client)
+        end
+    end
+
+    if instance.request_logging then print(method.." "..path.." -> "..status_code) end -- log request if enabled
+end
+
 -- handle GET
 function tsua:get(path, handler)
     self.routes["GET " .. path] = handler
@@ -129,134 +279,55 @@ end
 function tsua:listen(port)
     local socket = require("socket")
     local server = assert(socket.bind("*", port))
-
-    local server_instance = self -- required for functions called from the res object
+    server:settimeout(0) -- non-blocking
 
     print("server running on http://127.0.0.1:" .. port)
     if self.request_logging then
         print("request logging enabled\n-----")
     end
 
+    local coroutines = {}
+    local read_list = { server }
+    local birth_times = {}
+
     while true do
-        status_code = "???" -- reset status code, prevents misleading logs
-        local client = server:accept()
-        client:settimeout(self.timeout)
-
-        local request_line = client:receive("*l") -- get request line
-
-        if not request_line then -- deny weird clients
-            client:close()
-            goto continue
-        end
-
-        local method, path = request_line:match("^(%S+)%s+(%S+)") -- parse method and the path
-
-        if not method or not path then -- deny weird clients
-            send(client, "400 Bad Request", { ["Content-Type"] = "text/plain" }, "400 Bad Request")
-            if self.request_logging then print("??? ??? -> 400") end
-            client:close()
-            goto continue
-        end
-
-        if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
-            send_403(self, client)
-            if self.request_logging then print(method.." "..path.." -> 403") end
-            client:close()
-            goto continue
-        end
-
-        local headers = {}
-        local header_count = 0
-        while header_count < self.max_headers do -- parse headers, max headers to prevent malicious clients overloading the server
-            local line = client:receive("*l")
-            if not line or line == "" then break end -- blank line = end of headers
-
-            local key, value = line:match("^([^:]+):%s*(.+)")
-            if key and value then
-                headers[key:lower()] = value -- lowercase keys for consistent lookups
-            end
-            header_count = header_count + 1
-        end
-
-        local body = ""
-        if method == "POST" then -- parse body
-            local length = tonumber(headers["content-length"])
-            if length and length > 0 then
-                if length > self.max_body then -- combats malicious clients
-                    send(client, "413 Content Too Large", { ["Content-Type"] = "text/plain" }, "413 Content Too Large")
-                    if self.request_logging then print(method.." "..path.." -> 413") end
-                    client:close()
-                    goto continue
-                end
-                body = client:receive(length)
+        local readable = socket.select(read_list, nil, 0.01) -- which socket has data ready??!
+        local now = socket.gettime()
+        local expired = {}
+        for sock, born in pairs(birth_times) do
+            if now - born > self.timeout then
+                table.insert(expired, sock) -- collect all the connections living rentfree...
             end
         end
 
-        -- check static directories before route lookup
-        local static_handled = false
-        for prefix, dir in pairs(self.static_dirs) do
-            if path:sub(1, #prefix) == prefix then
-                local file_path = dir .. path:sub(#prefix + 1)
-                local file = io.open(file_path, "rb")
-
-                if file then
-                    local content = file:read("*all")
-                    file:close()
-                    send(client, "200 OK", {
-                        ["Content-Type"] = get_mime(file_path),
-                        ["Connection"] = "close"
-                    }, content)
-                else
-                    send_404(self, client)
-                end
-
-                static_handled = true
-                break
-            end
+        for _, sock in ipairs(expired) do
+            cleanup(sock, coroutines, birth_times, read_list) -- ...and DESTROY THEM
         end
 
-        if not static_handled then
-            local handler = self.routes[method .. " " .. path]
-            local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_body(body) or {} }
-            local res = {}
+        for _, sock in ipairs(readable) do
+            if sock == server then
+                local client = server:accept() -- accept new client
+                if client then
+                    client:settimeout(0) -- non-blocking
 
-            function res:send(status, res_headers, res_body)
-                send(client, status, res_headers or {}, res_body or "")
-            end
-
-            function res:serve(file_path) -- serve html page
-                local file = io.open(file_path, "rb")
-
-                if file then
-                    local content = file:read("*all")
-                    file:close()
-                    self:send("200 OK", { ["Content-Type"] = get_mime(file_path), ["Connection"] = "close" }, content)
-                else
-                    send_404(server_instance, client)
-                end
-            end
-
-            -- run route
-            if handler then
-                local ok, err = pcall(handler, req, res)
-                if not ok then
-                    if self.error_handler then
-                        self.error_handler(err, req, res)
-                    else
-                        send(client, "500 Internal Server Error", {["Content-Type"] = "text/plain"}, "500 Internal Server Error")
-                        print("handler error: " .. tostring(err))
-                    end
+                    local co = coroutine.create(function() -- make coroutine for client
+                        handle_request(self, client)
+                    end)
+                    coroutines[client] = co
+                    birth_times[client] = socket.gettime()
+                    table.insert(read_list, client) -- add it to the list
                 end
             else
-                send_404(self, client)
+                local co = coroutines[sock]
+                if co then
+                    local ok, err = coroutine.resume(co)
+                    if not ok or coroutine.status(co) == "dead" then
+                        cleanup(sock, coroutines, birth_times, read_list) -- discard dead clients
+                    end
+                end
             end
         end
-
-        if self.request_logging then print(method.." "..path.." -> "..status_code) end -- log request if enabled
-
-        client:close()
-        ::continue::
-    end
+    end -- HELLO AND WELCOME TO MY PYRAMID. CODE-READING TOURISTS PAY A FEE OF 5 GAJILLION DOLLARS.
 end
 
 return tsua
