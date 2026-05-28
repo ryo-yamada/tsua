@@ -1,5 +1,8 @@
 # Changelogs
 
+### v1.1.1
+- Enhancement of default error pages, thanks to @saurabhhhcodes for the PR
+
 ### v1.1
 - Implemented async, a single client no longer blocks everything
 
