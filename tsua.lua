@@ -321,7 +321,7 @@ function tsua:listen(port)
     local server = assert(socket.bind("*", port))
     server:settimeout(0) -- non-blocking
 
-    print("tsua v1.1 - server running on http://127.0.0.1:" .. port)
+    print("tsua v1.1.1 - server running on http://127.0.0.1:" .. port)
     if self.request_logging then
         print("request logging enabled\n-----")
     end
