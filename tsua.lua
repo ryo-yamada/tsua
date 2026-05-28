@@ -82,30 +82,70 @@ local function send(client, status, headers, body) -- func to send http data
     client:send(build_response(status, headers, body))
 end
 
-local function send_404(self, client)
-    if self.not_found then
-        local file = io.open(self.not_found, "rb")
+local function default_error_page(status_code, status_text, message)
+    return string.format([[
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>%s %s</title>
+    <style>
+        body { min-height: 100vh; margin: 0; display: grid; place-items: center; font-family: system-ui, sans-serif; background: #f7f7fb; color: #20212a; }
+        main { width: min(90vw, 34rem); padding: 2rem; border: 1px solid #d9dbe8; border-radius: 0.75rem; background: #fff; }
+        p:first-child { margin: 0 0 0.75rem; color: #696d7d; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+        h1 { margin: 0; font-size: clamp(2rem, 8vw, 4rem); line-height: 1; }
+        p:last-child { margin: 1rem 0 0; color: #4d5163; line-height: 1.6; }
+        @media (prefers-color-scheme: dark) {
+            body { background: #11131a; color: #f4f5f8; }
+            main { border-color: #2a2d3a; background: #191c26; }
+            p:first-child { color: #aeb4c5; }
+            p:last-child { color: #c5cad8; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <p>%s</p>
+        <h1>%s</h1>
+        <p>%s</p>
+    </main>
+</body>
+</html>]], status_code, status_text, status_code, status_text, message)
+end
+
+local function send_error_page(self, client, status, custom_path, fallback_body)
+    if custom_path then
+        local file = io.open(custom_path, "rb")
         if file then
             local content = file:read("*all")
             file:close()
-            send(client, "404 Not Found", { ["Content-Type"] = "text/html" }, content)
+            send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8" }, content)
+            return
         end
-    else
-        send(client, "404 Not Found", { ["Content-Type"] = "text/html" }, "<h1>404 Not Found</h1>")
     end
+
+    send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8" }, fallback_body)
+end
+
+local function send_404(self, client)
+    send_error_page(
+        self,
+        client,
+        "404 Not Found",
+        self.not_found,
+        default_error_page("404", "Not Found", "The page you are looking for is not registered in this tsua app.")
+    )
 end
 
 local function send_403(self, client)
-    if self.forbidden then
-        local file = io.open(self.forbidden, "rb")
-        if file then
-            local content = file:read("*all")
-            file:close()
-            send(client, "403 Forbidden", { ["Content-Type"] = "text/html" }, content)
-        end
-    else
-        send(client, "403 Forbidden", { ["Content-Type"] = "text/html" }, "<h1>403 Forbidden</h1>")
-    end
+    send_error_page(
+        self,
+        client,
+        "403 Forbidden",
+        self.forbidden,
+        default_error_page("403", "Forbidden", "tsua blocked this request because it tried to access a forbidden path.")
+    )
 end
 
 local function cleanup(sock, coroutines, birth_times, read_list)
