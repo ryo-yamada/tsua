@@ -1,5 +1,9 @@
 # Changelogs
 
+### v1.1.2
+- Fixed `404` and `403` logs showing up as `???` in the terminal
+- Small reforms/refactors around the repo
+
 ### v1.1.1
 - Enhancement of default error pages, thanks to @saurabhhhcodes for the PR
 

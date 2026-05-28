@@ -1,0 +1,3 @@
+no example for fileserver yet ^_^
+
+i need a res:download method with chunk streaming capabilities

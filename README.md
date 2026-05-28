@@ -1,7 +1,7 @@
 # tsua - Tiny Lua webserver framework
 Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.
 
-The framework allows you to simply serve files over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
+The framework allows you to simply serve files and send data over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
 
 Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or even microcontrollers such as an ESP32 or Raspberry Pi Pico.
 
@@ -77,9 +77,9 @@ request_logging = config.request_logging ~= false, -- looks weird but it prevent
 max_body = config.max_body or (1024 * 1024), -- 1MB default max body in requests
 max_headers = config.max_headers or 30, -- default 30 max headers possible in requests
 timeout = config.timeout or 3, -- default 3s before dropping client
+error_handler = config.error_handler, -- custom error handler function config
 not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
 forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
-error_handler = config.error_handler, -- custom error handler function config
 ```
 ---
 

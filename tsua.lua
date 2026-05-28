@@ -7,14 +7,14 @@ function tsua.new(config)
         routes = {},
         static_dirs = {},
         -- config starts here
-        
+
         request_logging = config.request_logging ~= false, -- looks weird but it prevents unexpected behavior when setting a config, default is true
         max_body = config.max_body or (1024 * 1024), -- 1MB default max body in requests
         max_headers = config.max_headers or 30, -- default 30 max headers possible in requests
         timeout = config.timeout or 3, -- default 3s before dropping client
+        error_handler = config.error_handler, -- custom error handler function config
         not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
         forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
-        error_handler = config.error_handler, -- custom error handler function config
 
         -- config ends here
     }, tsua)
@@ -63,7 +63,7 @@ end
 
 local function parse_body(body)
     local params = {}
-    for key, value in body:gmatch("([^&=]+)=([^&=]+)") do
+    for key, value in body:gmatch("([^&=]+)=([^&=]+)") do -- i hope i dont have to touch this code for a while
         params[url_decode(key)] = url_decode(value)
     end
     return params
@@ -82,6 +82,7 @@ local function send(client, status, headers, body) -- func to send http data
     client:send(build_response(status, headers, body))
 end
 
+-- default, universal page for errors
 local function default_error_page(status_code, status_text, message)
     return string.format([[
 <!doctype html>
@@ -114,6 +115,7 @@ local function default_error_page(status_code, status_text, message)
 </html>]], status_code, status_text, status_code, status_text, message)
 end
 
+-- func to make it easier to serve pretty much any error
 local function send_error_page(self, client, status, custom_path, fallback_body)
     if custom_path then
         local file = io.open(custom_path, "rb")
@@ -128,27 +130,7 @@ local function send_error_page(self, client, status, custom_path, fallback_body)
     send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8" }, fallback_body)
 end
 
-local function send_404(self, client)
-    send_error_page(
-        self,
-        client,
-        "404 Not Found",
-        self.not_found,
-        default_error_page("404", "Not Found", "The requested resource doesn't exist or could not be found - tsua")
-    )
-end
-
-local function send_403(self, client)
-    send_error_page(
-        self,
-        client,
-        "403 Forbidden",
-        self.forbidden,
-        default_error_page("403", "Forbidden", "Access to the requested resource is forbidden - tsua")
-    )
-end
-
-local function cleanup(sock, coroutines, birth_times, read_list)
+local function cleanup(sock, coroutines, birth_times, read_list) -- func to clean up sockets for some reason
     coroutines[sock] = nil
     birth_times[sock] = nil
     for i, s in ipairs(read_list) do
@@ -194,6 +176,28 @@ local function handle_request(instance, client)
         send(client, status, headers, body)
     end
 
+    local function send_404()
+        send_error_page(
+            instance,
+            client,
+            "404 Not Found",
+            instance.not_found,
+            default_error_page("404", "Not Found", "The requested resource doesn't exist or could not be found - tsua")
+        )
+        status_code = "404"
+    end
+
+    local function send_403()
+        send_error_page(
+            instance,
+            client,
+            "403 Forbidden",
+            instance.forbidden,
+            default_error_page("403", "Forbidden", "Access to the requested resource is forbidden - tsua")
+        )
+        status_code = "403"
+    end
+
     local request_line = receive_line(client)  -- get request line
     if not request_line then return end  -- deny weird clients
 
@@ -206,7 +210,7 @@ local function handle_request(instance, client)
     end
 
     if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
-        send_403(instance, client)
+        send_403()
         if instance.request_logging then print(method.." "..path.." -> 403") end
         return
     end
@@ -252,7 +256,7 @@ local function handle_request(instance, client)
                     ["Connection"] = "close"
                 }, content)
             else
-                send_404(instance, client)
+                send_404()
             end
 
             static_handled = true
@@ -277,7 +281,7 @@ local function handle_request(instance, client)
                 file:close()
                 self:send("200 OK", { ["Content-Type"] = get_mime(file_path), ["Connection"] = "close" }, content)
             else
-                send_404(instance, client)
+                send_404()
             end
         end
 
@@ -293,7 +297,7 @@ local function handle_request(instance, client)
                 end
             end
         else
-            send_404(instance, client)
+            send_404()
         end
     end
 
@@ -321,7 +325,7 @@ function tsua:listen(port)
     local server = assert(socket.bind("*", port))
     server:settimeout(0) -- non-blocking
 
-    print("tsua v1.1.1 - server running on http://127.0.0.1:" .. port)
+    print("tsua v1.1.2 - server running on http://127.0.0.1:" .. port)
     if self.request_logging then
         print("request logging enabled\n-----")
     end
