@@ -134,7 +134,7 @@ local function send_404(self, client)
         client,
         "404 Not Found",
         self.not_found,
-        default_error_page("404", "Not Found", "The page you are looking for is not registered in this tsua app.")
+        default_error_page("404", "Not Found", "The requested resource doesn't exist or could not be found - tsua")
     )
 end
 
@@ -144,7 +144,7 @@ local function send_403(self, client)
         client,
         "403 Forbidden",
         self.forbidden,
-        default_error_page("403", "Forbidden", "tsua blocked this request because it tried to access a forbidden path.")
+        default_error_page("403", "Forbidden", "Access to the requested resource is forbidden - tsua")
     )
 end
 
