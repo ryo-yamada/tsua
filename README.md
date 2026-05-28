@@ -1,20 +1,19 @@
-# Tsua - Tiny Lua webserver framework
-Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket. The framework allows you to achieve the goal of simply delivering files over HTTP and build a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
+# tsua - Tiny Lua webserver framework
+Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.
 
-An advantage that comes with using Tsua is that Lua's runtime is pretty small, so compared to something like Python's Flask, it uses significantly less system resources, which allows it to run well on something like a microcontroller, which is pretty cool. Lua is also faster than Python in terms of raw execution speed. I'm also planning to try using LuaJIT some time soon, which will improve raw execution speed.
+The framework allows you to simply serve files over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
 
-However, it mostly doesn't matter how fast a CPU can execute instructions if the context is a web server. The bottleneck is almost always I/O.
+Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or even microcontrollers such as an ESP32 or Raspberry Pi Pico.
 
-### IMPORTANT,
-Right now, the use of Tsua is only encouraged for static websites, where not much dynamic activity occurs. There are still a lot more things that must be implemented, such as more HTTP method handling, and I am also afraid that the currently implemented security is not good enough to secure a more dynamic web application. If you do decide to host a website with this, I advise that you run it in a Docker container, as it isolates the application from the rest of the system incase something does go wrong in security. Everything that is currently planned to be implemented can be found in the roadmap at the bottom of this README.
-
-No dependencies beyond LuaSocket are required.
+## Current status
+Tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.
 
 ## Use guide
 - You must have Lua and LuaSocket installed
 
 e.g. `luarocks install luasocket`
 - You can simply download `tsua.lua` and require it in your `server.lua` file
+- No dependencies beyond LuaSocket are required.
 
 Basic example of a `server.lua` file (examples/ichi/server.lua):
 ```lua
@@ -84,15 +83,25 @@ error_handler = config.error_handler, -- custom error handler function config
 ```
 ---
 
+## Contributing
+
+Contribution is heavily encouraged, and I'm trying to keep tsua small and approachable for this reason
+
+If you are:
+- learning Lua
+- interested in HTTP
+- looking for something to contribute to
+
+then I'm looking forward to working with you.
+
+Issues, pull requests, feature suggestions, and discussion are all appreciated. If you're looking to contribute but aren't sure how, you can check the issue tracker, in which I or others might post some issues for you to look into.
+
+Development is currently focused on:
+- Security
+- Dynamic support
+- Developer experience enhancements
+
 ## Philosophy
-This was a project I started just for fun, as I wanted to see how easy it would be to deliver a site over the web with a Lua backend. However, it started becoming its own little framework, and so I decided to publish it on GitHub. My plan is to continue developing it with a focus on simplicity. I myself seem to be learning a decent amount from this, and perhaps if you're learning Lua, this repository could also help you become a better programmer.
+This was a project I started just for fun, as I wanted to see how easy it would be to deliver a site over the web with a Lua backend. However, it started becoming its own little framework, and so I decided to publish it on GitHub. My plan is to continue developing it with a focus on simplicity.
 
 This framework is aimed towards sites that don't have too much dynamic functionality. Portfolios, documentation, etc. However, I suppose when this framework continues development, it will probably be able to support more dynamic functionality.
-
-## Todo
-- General codebase improvements
-- DELETE method handling
-- Query string parsing
-- Documentation page that lists out all supported res methods, HTTP methods, etc
-
-*I am planning to be slightly hands-off on this project, because I want to invite people to open issues, pull requests and discuss changes. Contribute!*
