@@ -1,5 +1,8 @@
 # Changelogs
 
+### v1.1.3
+- Implemented URL query parsing support
+
 ### v1.1.2
 - Fixed `404` and `403` logs showing up as `???` in the terminal
 - Small reforms/refactors around the repo

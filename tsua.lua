@@ -61,7 +61,7 @@ local function url_decode(str) -- i don't know how decoding works! ^_^
     return str
 end
 
-local function parse_body(body)
+local function parse_encoded(body)
     local params = {}
     for key, value in body:gmatch("([^&=]+)=([^&=]+)") do -- i hope i dont have to touch this code for a while
         params[url_decode(key)] = url_decode(value)
@@ -209,6 +209,20 @@ local function handle_request(instance, client)
         return
     end
 
+    path = url_decode(path)
+
+    local query_string
+    path, query_string = path:match("^([^?]*)%??(.*)") -- MORE WEIRD REGEX!!! I HATE THIS WORLD
+
+    local query = {}
+    if query_string and query_string ~= "" then
+        query = parse_encoded(query_string) -- parse query_string before adding it to req
+    end
+
+    if path ~= "/" and path:sub(-1) == "/" then
+        path = path:sub(1, -2) -- remove trailing slash
+    end
+
     if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
         send_403()
         if instance.request_logging then print(method.." "..path.." -> 403") end
@@ -266,7 +280,7 @@ local function handle_request(instance, client)
 
     if not static_handled then -- create req and res objects
         local handler = instance.routes[method .. " " .. path]
-        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_body(body) or {} }
+        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_encoded(body) or {}, query = query }
         local res = {}
 
         function res:send(status, res_headers, res_body) -- send general data
@@ -325,7 +339,7 @@ function tsua:listen(port)
     local server = assert(socket.bind("*", port))
     server:settimeout(0) -- non-blocking
 
-    print("tsua v1.1.2 - server running on http://127.0.0.1:" .. port)
+    print("tsua v1.1.3 - server running on http://0.0.0.0:" .. port)
     if self.request_logging then
         print("request logging enabled\n-----")
     end
