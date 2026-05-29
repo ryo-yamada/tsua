@@ -15,23 +15,26 @@ e.g. `luarocks install luasocket`
 - You can simply download `tsua.lua` and require it in your `server.lua` file
 - No dependencies beyond LuaSocket are required.
 
-Basic example of a `server.lua` file (examples/ichi/server.lua):
+Basic example of a `server.lua` file (examples/static-site/server.lua):
 ```lua
 local Tsua = require("tsua")
 local app = Tsua.new({ -- init & config
     max_headers = 15,
     timeout = 2,
-    not_found = "examples/ichi/frontend/404.html"
+    not_found = "./frontend/404.html"
 })
 
-app:static("/static", "examples/ichi/static")
+app:static("/static", "./static")
 
 app:get("/", function(req, res)
-    res:serve("examples/ichi/frontend/index.html")
+    res:serve("./frontend/index.html")
 end)
 
 app:get("/otherpage", function(req, res)
-    res:serve("examples/ichi/frontend/otherpage.html")
+    res:serve("./frontend/otherpage.html")
+    if req.query.name then
+        print(req.query.name) -- /otherpage?name=ryo -> "ryo"
+    end
 end)
 
 app:post("/submit", function(req, res)
@@ -40,18 +43,19 @@ app:post("/submit", function(req, res)
     end
 end)
 
-app:listen(19999) -- serve on http://localhost:19999/
+app:listen(19999) -- serve on http://0.0.0.0:19999/
 ```
 
 ### req and res objects
 Parse information about the request with *req*:
 ```lua
 app:post("/sendcredentials", function(req, res)
-    req.method -- POST
-    req.path -- /sendcredentials
+    req.method -- "POST"
+    req.path -- "/sendcredentials"
     req.headers -- table of headers
-    req.body -- key1=abc&key2=123
-    req.params.key1 -- abc
+    req.body -- "key1=abc&key2=123"
+    req.params.key1 -- "abc"
+    req.query.name -- /sendcredentials?name=ryo -> "ryo"
 end)
 ```
 These are the only objects that req contains.

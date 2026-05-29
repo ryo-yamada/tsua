@@ -18,4 +18,10 @@ app:get("/otherpage", function(req, res)
     end
 end)
 
+app:post("/submit", function(req, res)
+    if req.params.name then
+        print(req.params.name)  -- "ryo"
+    end
+end)
+
 app:listen(19999) -- serve on http://0.0.0.0:19999/
