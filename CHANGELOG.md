@@ -1,5 +1,8 @@
 # Changelogs
 
+### v1.2
+- Implemented dynamic routing
+
 ### v1.1.3
 - Implemented URL query parsing support
 

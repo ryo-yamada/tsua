@@ -37,6 +37,10 @@ app:get("/otherpage", function(req, res)
     end
 end)
 
+app:get("/<page>", function(req, res) -- dynamic!!! serves whatever is passed if it is findable!!!
+    res:serve("./frontend/"..req.dyn.page..".html")
+end)
+
 app:post("/submit", function(req, res)
     if req.params.name then
         print(req.params.name)  -- "ryo"

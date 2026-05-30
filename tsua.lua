@@ -1,3 +1,4 @@
+local tsua_version = "v1.2"
 local tsua = {}
 tsua.__index = tsua
 
@@ -5,6 +6,7 @@ function tsua.new(config)
     config = config or {}
     return setmetatable({
         routes = {},
+        dynamic_routes = {},
         static_dirs = {},
         -- config starts here
 
@@ -168,6 +170,20 @@ local function receive_bytes(client, length) -- literally just almost the same t
     end
 end
 
+local function register_dynamic(self, method, path, handler)
+    local pattern = "^" .. path:gsub("<([%w_]+)>", "([^/]+)") .. "$"
+    local param_names = {}
+    for name in path:gmatch("<([%w_]+)>") do
+        table.insert(param_names, name)
+    end
+    table.insert(self.dynamic_routes, {
+        method = method,
+        pattern = pattern,
+        param_names = param_names,
+        handler = handler
+    })
+end
+
 local function handle_request(instance, client)
     local status_code = "???" -- status code, should be set later on in the func
 
@@ -280,8 +296,30 @@ local function handle_request(instance, client)
 
     if not static_handled then -- create req and res objects
         local handler = instance.routes[method .. " " .. path]
-        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_encoded(body) or {}, query = query }
+        local dyn = {}
+        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_encoded(body) or {}, query = query, dyn = dyn }
         local res = {}
+
+        if not handler then -- no routes registered, try dynamic
+            for _, route in ipairs(instance.dynamic_routes) do
+                if route.method == method then
+                    local captures = { path:match(route.pattern) }
+                    if #captures > 0 then -- if any match found
+                        handler = route.handler
+                        for i, name in ipairs(route.param_names) do
+                            local value = captures[i]
+                            if value:find("%.%.") or value:find("[/\\%z]") then
+                                send_403()
+                                if instance.request_logging then print(method .. " " .. path .. " -> 403") end
+                                return
+                            end
+                            dyn[name] = url_decode(value)
+                        end
+                        break
+                    end
+                end
+            end
+        end
 
         function res:send(status, res_headers, res_body) -- send general data
             send_local(status, res_headers or {}, res_body or "")
@@ -320,12 +358,20 @@ end
 
 -- handle GET
 function tsua:get(path, handler)
-    self.routes["GET " .. path] = handler
+    if path:find("<") then -- for dynamic routing
+        register_dynamic(self, "GET", path, handler)
+    else
+        self.routes["GET " .. path] = handler
+    end
 end
 
 -- handle POST
 function tsua:post(path, handler)
-    self.routes["POST " .. path] = handler
+    if path:find("<") then -- for dynamic routing
+        register_dynamic(self, "POST", path, handler)
+    else
+        self.routes["POST " .. path] = handler
+    end
 end
 
 -- compose static serving
@@ -339,7 +385,7 @@ function tsua:listen(port)
     local server = assert(socket.bind("*", port))
     server:settimeout(0) -- non-blocking
 
-    print("tsua v1.1.3 - server running on http://0.0.0.0:" .. port)
+    print("tsua "..tsua_version.." - server running on http://0.0.0.0:" .. port)
     if self.request_logging then
         print("request logging enabled\n-----")
     end
