@@ -47,6 +47,12 @@ app:post("/submit", function(req, res)
     end
 end)
 
+app:put("/submit", function(req, res)
+    if req.params.name then
+        print("updated " .. req.params.name)
+    end
+end)
+
 app:listen(19999) -- serve on http://0.0.0.0:19999/
 ```
 
@@ -62,6 +68,7 @@ app:post("/sendcredentials", function(req, res)
     req.query.name -- /sendcredentials?name=ryo -> "ryo"
 end)
 ```
+`req.params` is populated for `POST` and `PUT` requests with URL-encoded bodies.
 These are the only objects that req contains.
 
 *res* wraps the raw socket and provides helper methods:

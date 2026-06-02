@@ -28,4 +28,10 @@ app:post("/submit", function(req, res)
     end
 end)
 
+app:put("/submit", function(req, res)
+    if req.params.name then
+        print("updated " .. req.params.name)
+    end
+end)
+
 app:listen(19999) -- serve on http://0.0.0.0:19999/

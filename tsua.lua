@@ -259,7 +259,7 @@ local function handle_request(instance, client)
     end
 
     local body = ""
-    if method == "POST" then -- parse body
+    if method == "POST" or method == "PUT" then -- parse body for methods with form data
         local length = tonumber(headers["content-length"])
         if length and length > 0 then
             if length > instance.max_body then -- combats malicious clients
@@ -297,7 +297,15 @@ local function handle_request(instance, client)
     if not static_handled then -- create req and res objects
         local handler = instance.routes[method .. " " .. path]
         local dyn = {}
-        local req = { method = method, path = path, headers = headers, body = body, params = method == "POST" and parse_encoded(body) or {}, query = query, dyn = dyn }
+        local req = {
+            method = method,
+            path = path,
+            headers = headers,
+            body = body,
+            params = (method == "POST" or method == "PUT") and parse_encoded(body) or {},
+            query = query,
+            dyn = dyn
+        }
         local res = {}
 
         if not handler then -- no routes registered, try dynamic
@@ -371,6 +379,15 @@ function tsua:post(path, handler)
         register_dynamic(self, "POST", path, handler)
     else
         self.routes["POST " .. path] = handler
+    end
+end
+
+-- handle PUT
+function tsua:put(path, handler)
+    if path:find("<") then -- for dynamic routing
+        register_dynamic(self, "PUT", path, handler)
+    else
+        self.routes["PUT " .. path] = handler
     end
 end
 
