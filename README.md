@@ -3,7 +3,7 @@ Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.
 
 The framework allows you to simply serve files and send data over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
 
-Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or even microcontrollers such as an ESP32 or Raspberry Pi Pico.
+Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or a Raspberry Pi Zero W.
 
 ## Current status
 Tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.
