@@ -1,4 +1,9 @@
 # Changelogs
+This is a changelog tracker for the `tsua.lua` file, not for the entire repository.
+
+### v1.2.1
+- Implemented PUT method
+- Made a helper function that escapes HTML, good for security (`res:escape()`)
 
 ### v1.2
 - Implemented dynamic routing
@@ -8,7 +13,7 @@
 
 ### v1.1.2
 - Fixed `404` and `403` logs showing up as `???` in the terminal
-- Small reforms/refactors around the repo
+- Small reforms/refactors
 
 ### v1.1.1
 - Enhancement of default error pages, thanks to @saurabhhhcodes for the PR
@@ -22,7 +27,6 @@
 
 ### v1.0.1
 - Implemented POST
-- Updated examples
 - Implemented some error handling
 - Small code refactors
 

@@ -1,0 +1,179 @@
+<!-- tsua.neptunus.cc -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; display: flex; font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; }
+        nav { width: 200px; height: 100vh; background: #1e1e1e; padding: 1rem; position: sticky; top: 0; border-right: 1px solid #333; }
+        nav a { display: block; margin-bottom: 0.75rem; text-decoration: none; }
+        a { color: #7ab8ff; }
+        a:hover { color: #a8d1ff; }
+        main { padding: 2rem; flex: 1; }
+        section { min-height: 50vh; }
+        p { max-width: 100ch; }
+    </style>
+
+    <link rel="stylesheet" href="style/prism.css">
+    <script src="style/prism.js"></script>
+    <script src="style/prism-lua.js"></script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <title>Documentation - tsua</title>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+
+            <li><a href="#requirements">Requirements</a></li>
+            <li><a href="#minimal-application">Minimal Application</a></li>
+            <li><a href="#static-files">Static Files</a></li>
+            <li><a href="#methods">HTTP methods</a>
+                <ul>
+                    <li><a href="#httpget">GET</a></li>
+                    <li><a href="#httppost">POST</a></li>
+                    <li><a href="#httpput">PUT</a></li>
+                </ul>
+            </li>
+            <li><a href="#routing">Routing</a></li>
+            <li><a href="#requests">Requests (<code>req</code>)</a></li>
+            <li><a href="#responses">Responses (<code>res</code>)</a>
+                <ul>
+                    <li><a href="#res-send"><code>res:send()</code></a></li>
+                    <li><a href="#res-serve"><code>res:serve()</code></a></li>
+                    <li><a href="#res-escape"><code>res:escape()</code></a></li>
+                </ul>
+            </li>
+            <li><a href="#config">Configuration</a></li>
+
+            <li><a href="#misc">Miscellaneous</a>
+                <ul>
+                    <li><a href="#contributing">Contributing</a></li>
+                    <li><a href="#philosophy">Philosophy</a></li>
+                    <li><a href="#security">Security Policy</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="intro">
+            <h1>Introduction</h1>
+            <p>Repository: <a href="https://github.com/ryo-yamada/tsua">github.com/ryo-yamada/tsua</a></p>
+                <p>Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.</p>
+                <p>The framework allows you to simply serve files and send data over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.</p>
+                <p>Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or a Raspberry Pi Zero W.</p>
+                <p>Currently, tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.</p>
+                <p><i>Fun fact: this site is hosted with tsua!</i></p>
+        </section>
+
+        <section id="requirements">
+            <h1>Requirements</h1>
+                <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="minimal-application">
+            <h1>Minimal Application</h1>
+                <p>This is what a minimal webserver with tsua could look like:</p>
+                <pre><code class="language-lua">local Tsua = require("tsua") -- 1
+local app = Tsua.new() -- 2
+
+app:get("/", function(req, res) -- 3
+    res:serve("./index.html") -- 4
+end)
+
+app:listen(19999) -- 5</code></pre>
+                <p>Well, what does this code do?</p>
+                <ol>
+                    <li>First, we require the tsua module file</li>
+                    <li>Then, we initialize a server instance to access tsua's functionality</li>
+                    <li>After that, we can compose a route (in this case, root) that takes GET requests</li>
+                    <li>This route then serves an <code>index.html</code> file that the client browser can display every time a GET request is made</li>
+                    <li>Finally, we set up the server to listen on a port, in this case port 19999.</li>
+                </ol>
+                <p>You can then save this file as something like <code>server.lua</code>, and run it with <code>lua server.lua</code>. Make sure lua and luarocks is installed, and that luasocket is installed through luarocks aswell.</p>
+        </section>
+
+        <section id="static-files">
+            <h1>Static Files</h1>
+                <p>Most web apps use static files for serving CSS, JS, images, etc. It's a way to serve files directly to the client without needing any specific route handling. Tsua makes it pretty simple. Create a directory called <code>static</code>, and place your desired files in it, for example, a <code>style.css</code> file.</p>
+                <p>In tsua, it would then be utilized and exposed like so:</p>
+                <code class="language-lua">app:static("/static", "./static")</code>
+                <p>And that's it! Tsua will now serve any static file(s) per usual, such as <code>/static/style.css</code></p>
+                <p>The first argument is the URL prefix, and the second one is the directory's name on disk.</p>
+                <p>Just so you know, static directories are always checked before route handlers. If a path matches a registered static directory, the static file gets served, and the route handler will not be executed.</p>
+                <p>And as a side note, the directory name doesn't NEED to be <code>static</code> specifically. You could do something like <code class="language-lua">app:static("/assets", "./public")</code>, no problem.</p>
+        </section>
+
+        <section id="methods">
+            <h1>HTTP methods</h1>
+            <h2 id="httpget">GET method</h2>
+                <p>loremipsumblablablabla</p>
+            <h2 id="httppost">POST method</h2>
+                <p>loremipsumblablablabla</p>
+            <h2 id="httpput">PUT method</h2>
+                <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="routing">
+            <h1>Routing</h1>
+                <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="requests">
+            <h1>Requests (<code>req</code>)</h1>
+                <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="responses">
+            <h1>Responses (<code>res</code>)</h1>
+                <h2 id="res-send"><code>res:send()</code></h2>
+                    <p>loremipsumblablablabla</p>
+                <h2 id="res-serve"><code>res:serve()</code></h2>
+                    <p>loremipsumblablablabla</p>
+                <h2 id="res-escape"><code>res:escape()</code></h2>
+                    <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="config">
+            <h1>Configuration</h1>
+                <p>loremipsumblablablabla</p>
+        </section>
+
+        <section id="misc">
+            <h1>Miscellaneous</h1>
+            <h2 id="contributing">Contributing</h2>
+                <p>Contribution is heavily encouraged, and I'm trying to keep tsua small and approachable for this reason</p>
+                <p>If you are:</p>
+                <ul>
+                    <li>learning lua</li>
+                    <li>interested in HTTP</li>
+                    <li>looking for something to contribute to</li>
+                </ul>
+                <p>then I'm looking forward to working with you.</p>
+                <p>Issues, pull requests, feature suggestions, and discussion are all appreciated. If you're looking to contribute but aren't sure how, you can check the <a href="https://github.com/ryo-yamada/tsua/issues">issue tracker</a>, in which I or others might post some issues for you to look into.</p>
+                <p>Development is currently focused on:</p>
+                <ul>
+                    <li>Core functionality</li>
+                    <li>Developer experience enhancements</li>
+                </ul>
+            <h2 id="philosophy">Philosophy</h2>
+                <p>This was a project I started just for fun, as I wanted to see how easy it would be to deliver a site over the web with a Lua backend. However, it started becoming its own little framework, and so I decided to publish it on GitHub. My plan is to continue developing it with a focus on simplicity.</p>
+                <p>This framework is aimed towards sites that don't have too much dynamic functionality. Portfolios, documentation, etc. However, I suppose when this framework continues development, it will probably be able to support more dynamic functionality.</p>
+            <h2 id="security">Security Policy</h2>
+                <p>If you think you've found a vulnerability for tsua, please reach out to me at <b>f@placeq.com</b>, and we'll continue speaking there.</p>
+                <p>When sending me an email, please provide details in the following structure:</p>
+                <ul>
+                    <li>Description of the issue</li>
+                    <li>How to reproduce</li>
+                    <li>Potential impact</li>
+                    <li>Suggested fix, if available</li>
+                </ul>
+                <p>Please do not publicly report or discuss security vulnerabilities.</p>
+        </section>
+    </main>
+</body>
+</html>

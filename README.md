@@ -12,7 +12,7 @@ Tsua is experimental and only encouraged for static websites where dynamic activ
 - You must have Lua and LuaSocket installed
 
 e.g. `luarocks install luasocket`
-- You can simply download `tsua.lua` and require it in your `server.lua` file
+- You can simply download `tsua.lua` from the releases page and require it in your server file
 - No dependencies beyond LuaSocket are required.
 
 Basic example of a `server.lua` file (examples/static-site/server.lua):
@@ -112,9 +112,9 @@ then I'm looking forward to working with you.
 Issues, pull requests, feature suggestions, and discussion are all appreciated. If you're looking to contribute but aren't sure how, you can check the issue tracker, in which I or others might post some issues for you to look into.
 
 Development is currently focused on:
-- Security
-- Dynamic support
+- Core functionality
 - Developer experience enhancements
+- Documentation
 
 ## Philosophy
 This was a project I started just for fun, as I wanted to see how easy it would be to deliver a site over the web with a Lua backend. However, it started becoming its own little framework, and so I decided to publish it on GitHub. My plan is to continue developing it with a focus on simplicity.

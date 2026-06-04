@@ -1,4 +1,4 @@
-local tsua_version = "v1.2"
+local tsua_version = "v1.2.1"
 local tsua = {}
 tsua.__index = tsua
 
@@ -343,6 +343,15 @@ local function handle_request(instance, client)
             else
                 send_404()
             end
+        end
+
+        function res:escape(str) -- html escape helper
+            str = str:gsub("&", "&amp;") -- must be first, otherwise it escapes the & in other replacements!!
+            str = str:gsub("<", "&lt;")
+            str = str:gsub(">", "&gt;")
+            str = str:gsub('"', "&quot;")
+            str = str:gsub("'", "&#39;")
+            return str
         end
 
         -- run route
