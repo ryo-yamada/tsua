@@ -125,7 +125,23 @@ app:listen(19999) -- 5</code></pre>
 
         <section id="requests">
             <h1>Requests (<code>req</code>)</h1>
-                <p>loremipsumblablablabla</p>
+                <p>Route callbacks receive a <code>req</code> object with the data tsua parsed from the incoming request. It is the first argument passed to handlers such as <code>app:get()</code>, <code>app:post()</code>, and <code>app:put()</code>.</p>
+                <ul>
+                    <li><code>req.method</code> contains the HTTP method, such as <code>GET</code>, <code>POST</code>, or <code>PUT</code>.</li>
+                    <li><code>req.path</code> contains the requested path without the host name.</li>
+                    <li><code>req.headers</code> contains request headers as a Lua table.</li>
+                    <li><code>req.body</code> contains the request body for methods that send one.</li>
+                    <li><code>req.params</code> contains form values parsed from the request body.</li>
+                    <li><code>req.query</code> contains query string values from the URL.</li>
+                    <li><code>req.dyn</code> contains dynamic route values from paths that use placeholders.</li>
+                </ul>
+                <p>For example, a request to <code>/users/42?tab=profile</code> can read both the dynamic path value and the query string:</p>
+                <pre><code class="language-lua">app:get("/users/&lt;id&gt;", function(req, res)
+    local user_id = req.dyn.id
+    local tab = req.query.tab
+
+    res:send("User " .. user_id .. " tab: " .. tab)
+end)</code></pre>
         </section>
 
         <section id="responses">
