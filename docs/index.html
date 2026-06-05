@@ -72,7 +72,16 @@
 
         <section id="requirements">
             <h1>Requirements</h1>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="minimal-application">
@@ -111,36 +120,117 @@ app:listen(19999) -- 5</code></pre>
         <section id="methods">
             <h1>HTTP methods</h1>
             <h2 id="httpget">GET method</h2>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
             <h2 id="httppost">POST method</h2>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
             <h2 id="httpput">PUT method</h2>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="routing">
             <h1>Routing</h1>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="requests">
             <h1>Requests (<code>req</code>)</h1>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="responses">
             <h1>Responses (<code>res</code>)</h1>
                 <h2 id="res-send"><code>res:send()</code></h2>
-                    <p>loremipsumblablablabla</p>
+                    <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
                 <h2 id="res-serve"><code>res:serve()</code></h2>
-                    <p>loremipsumblablablabla</p>
+                    <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
                 <h2 id="res-escape"><code>res:escape()</code></h2>
-                    <p>loremipsumblablablabla</p>
+                    <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="config">
             <h1>Configuration</h1>
-                <p>loremipsumblablablabla</p>
+                <p>The <code>req</code> object contains all the information about the incoming HTTP request. Here are the available properties:</p>
+                <ul>
+                    <li><code>req.method</code>: A string representing the HTTP method used (e.g., <code>'GET'</code>, <code>'POST'</code>, <code>'PUT'</code>).</li>
+                    <li><code>req.path</code>: The path of the requested resource (e.g., <code>'/index.html'</code>).</li>
+                    <li><code>req.headers</code>: A table containing all the HTTP headers sent by the client.</li>
+                    <li><code>req.body</code>: The raw body of the request as a string. For <code>POST</code> and <code>PUT</code> requests, this usually contains URL-encoded data.</li>
+                    <li><code>req.params</code>: A table containing the parsed body parameters. This is automatically populated for <code>POST</code> and <code>PUT</code> requests with URL-encoded bodies.</li>
+                    <li><code>req.query</code>: A table containing the parsed query string parameters from the URL (e.g., <code>/page?id=1</code> results in <code>req.query.id == '1'</code>).</li>
+                    <li><code>req.dyn</code>: A table containing parameters captured from dynamic routes (e.g., <code>app:get('/user/<name>', ...)</code> results in <code>req.dyn.name</code>).</li>
+                </ul>
         </section>
 
         <section id="misc">
