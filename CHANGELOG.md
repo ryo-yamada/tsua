@@ -1,6 +1,14 @@
 # Changelogs
 This is a changelog tracker for the `tsua.lua` file, not for the entire repository.
 
+### v1.3
+- Implemented DELETE method
+- Added 2 helper funcs:
+    - `res:redirect()`, allows redirecting clients to other pages easily
+    - `res:json()`, allows for in-framework json encoding and sending. Encode function must be user-provided since any other approach would complicate tsua
+- More MIME types
+- Slightly refactored and improved the error system
+
 ### v1.2.1
 - Implemented PUT method
 - Made a helper function that escapes HTML, good for security (`res:escape()`)

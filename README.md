@@ -1,12 +1,12 @@
 # tsua - Tiny Lua webserver framework
-Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.
+tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.
 
 The framework allows you to simply serve files and send data over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.
 
-Because Lua's runtime is pretty small compared to something like Python's Flask, tsua runs well on stuff like old devices, a tiny VPS, or a Raspberry Pi Zero W.
+Because Lua's runtime is pretty small compared to something like Python, tsua runs well on stuff like old devices, a tiny VPS, or a Raspberry Pi Zero W.
 
 ## Current status
-Tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.
+tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.
 
 ## Use guide
 - You must have Lua and LuaSocket installed
@@ -78,7 +78,11 @@ app:get("/", function(req, res)
 end)
 
 app:get("/oldpage", function(req, res)
-    res:send("301 Moved Permanently", {["Location"] = "/new-page"}, "") -- this one aswell !!
+    res:redirect("/new-page") -- this one aswell !!
+end)
+
+app:get("/hello", function(req, res)
+    res:send("200 OK", { ["Content-Type"] = "text/html; charset=UTF-8" }, "<h1>Hello from tsua</h1>")
 end)
 ```
 ### Configuration
@@ -95,6 +99,7 @@ timeout = config.timeout or 3, -- default 3s before dropping client
 error_handler = config.error_handler, -- custom error handler function config
 not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
 forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
+internal_error = config.internal_error, -- path to a custom 500 html file, default is framework-provided page
 ```
 ---
 

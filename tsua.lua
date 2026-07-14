@@ -1,4 +1,4 @@
-local tsua_version = "v1.2.1"
+local tsua_version = "v1.3"
 local tsua = {}
 tsua.__index = tsua
 
@@ -17,6 +17,7 @@ function tsua.new(config)
         error_handler = config.error_handler, -- custom error handler function config
         not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
         forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
+        internal_error = config.internal_error, -- path to a custom 500 html file, default is framework-provided page
 
         -- config ends here
     }, tsua)
@@ -25,13 +26,43 @@ end
 local mime_types = {
     html = "text/html; charset=UTF-8",
     css  = "text/css",
+    txt  = "text/plain",
     js   = "application/javascript",
     json = "application/json",
+    pdf  = "application/pdf",
+    xml  = "application/xml",
+    zip  = "application/zip",
     png  = "image/png",
     jpg  = "image/jpeg",
     ico  = "image/x-icon",
     svg  = "image/svg+xml",
-    txt  = "text/plain"
+    gif  = "image/gif",
+    webp = "image/webp",
+    mp4  = "video/mp4",
+    webm = "video/webm",
+    mp3  = "audio/mpeg",
+    wav  = "audio/wav",
+    ogg  = "audio/ogg",
+}
+
+local errors = {
+    ["403"] = {
+        title = "Forbidden",
+        config = "forbidden",
+        message = "Access to the requested resource is forbidden - tsua"
+    },
+
+    ["404"] = {
+        title = "Not Found",
+        config = "not_found",
+        message = "The requested resource doesn't exist or could not be found - tsua"
+    },
+
+    ["500"] = {
+        title = "Internal Server Error",
+        config = "internal_error",
+        message = "The server encountered an unexpected error - tsua"
+    }
 }
 
 local function get_mime(file_path)
@@ -124,12 +155,12 @@ local function send_error_page(self, client, status, custom_path, fallback_body)
         if file then
             local content = file:read("*all")
             file:close()
-            send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8" }, content)
+            send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8", ["Connection"] = "close" }, content)
             return
         end
     end
 
-    send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8" }, fallback_body)
+    send(client, status, { ["Content-Type"] = "text/html; charset=UTF-8", ["Connection"] = "close" }, fallback_body)
 end
 
 local function cleanup(sock, coroutines, birth_times, read_list) -- func to clean up sockets for some reason
@@ -192,26 +223,19 @@ local function handle_request(instance, client)
         send(client, status, headers, body)
     end
 
-    local function send_404()
-        send_error_page(
-            instance,
-            client,
-            "404 Not Found",
-            instance.not_found,
-            default_error_page("404", "Not Found", "The requested resource doesn't exist or could not be found - tsua")
-        )
-        status_code = "404"
-    end
+    
+    local function send_error(code)
+        local err = errors[code]
 
-    local function send_403()
         send_error_page(
             instance,
             client,
-            "403 Forbidden",
-            instance.forbidden,
-            default_error_page("403", "Forbidden", "Access to the requested resource is forbidden - tsua")
+            code .. " " .. err.title,
+            instance[err.config],
+            default_error_page(code, err.title, err.message)
         )
-        status_code = "403"
+
+        status_code = code
     end
 
     local request_line = receive_line(client)  -- get request line
@@ -240,7 +264,7 @@ local function handle_request(instance, client)
     end
 
     if path:find("%.%.") then -- THE GREATEST SECURITY KNOWN TO MANKIND
-        send_403()
+        send_error("403")
         if instance.request_logging then print(method.." "..path.." -> 403") end
         return
     end
@@ -286,7 +310,7 @@ local function handle_request(instance, client)
                     ["Connection"] = "close"
                 }, content)
             else
-                send_404()
+                send_error("404")
             end
 
             static_handled = true
@@ -317,7 +341,7 @@ local function handle_request(instance, client)
                         for i, name in ipairs(route.param_names) do
                             local value = captures[i]
                             if value:find("%.%.") or value:find("[/\\%z]") then
-                                send_403()
+                                send_error("403")
                                 if instance.request_logging then print(method .. " " .. path .. " -> 403") end
                                 return
                             end
@@ -333,7 +357,7 @@ local function handle_request(instance, client)
             send_local(status, res_headers or {}, res_body or "")
         end
 
-        function res:serve(file_path) -- serve html page
+        function res:serve(file_path) -- serve any file from disk
             local file = io.open(file_path, "rb")
 
             if file then
@@ -341,11 +365,25 @@ local function handle_request(instance, client)
                 file:close()
                 self:send("200 OK", { ["Content-Type"] = get_mime(file_path), ["Connection"] = "close" }, content)
             else
-                send_404()
+                send_error("404")
             end
         end
 
-        function res:escape(str) -- html escape helper
+        function res:redirect(new_page) -- redirect helper
+            self:send("301 Moved Permanently", {["Location"] = new_page}, "")
+        end
+
+        function res:json(encode_fn, data, status)
+            local ok, encoded = pcall(encode_fn, data)
+            if not ok then
+                send_error("500")
+                print("res:json() encode error: " .. tostring(encoded))
+                return
+            end
+            send_local(status or "200 OK", {["Content-Type"] = "application/json", ["Connection"] = "close"}, encoded)
+        end
+
+        function res.escape(str) -- html escape helper
             str = str:gsub("&", "&amp;") -- must be first, otherwise it escapes the & in other replacements!!
             str = str:gsub("<", "&lt;")
             str = str:gsub(">", "&gt;")
@@ -361,12 +399,12 @@ local function handle_request(instance, client)
                 if instance.error_handler then
                     instance.error_handler(err, req, res)
                 else
-                    send_local("500 Internal Server Error", {["Content-Type"] = "text/plain"}, "500 Internal Server Error")
+                    send_error("500")
                     print("handler error: " .. tostring(err))
                 end
             end
         else
-            send_404()
+            send_error("404")
         end
     end
 
@@ -397,6 +435,15 @@ function tsua:put(path, handler)
         register_dynamic(self, "PUT", path, handler)
     else
         self.routes["PUT " .. path] = handler
+    end
+end
+
+-- handle DELETE
+function tsua:delete(path, handler)
+    if path:find("<") then -- for dynamic routing
+        register_dynamic(self, "DELETE", path, handler)
+    else
+        self.routes["DELETE " .. path] = handler
     end
 end
 
