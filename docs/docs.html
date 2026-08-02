@@ -1,0 +1,253 @@
+<!-- tsua.neptunus.cc -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; display: flex; font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; }
+        nav { width: 200px; height: 100vh; background: #1e1e1e; padding: 1rem; position: sticky; top: 0; border-right: 1px solid #333; }
+        nav a { display: block; margin-bottom: 0.75rem; text-decoration: none; }
+        a { color: #7ab8ff; }
+        a:hover { color: #a8d1ff; }
+        main { padding: 2rem; flex: 1; }
+        section { min-height: 50vh; }
+        p { max-width: 100ch; }
+    </style>
+
+    <link rel="stylesheet" href="style/prism.css">
+    <script src="style/prism.js"></script>
+    <script src="style/prism-lua.js"></script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <title>Documentation - tsua</title>
+</head>
+<body>
+    <nav> <!-- sidebar -->
+        <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#requirements">Requirements</a></li>
+            <li><a href="#minimal-application">Minimal Application</a></li>
+            <li><a href="#static-files">Static Files</a></li>
+            <li><a href="#methods">HTTP methods</a></li>
+            <li><a href="#routing">Routing</a></li>
+            <li><a href="#requests">Requests (<code>req</code>)</a></li>
+            <li><a href="#responses">Responses (<code>res</code>)</a></li>
+            <li><a href="#config">Configuration</a></li>
+            <li><a href="#misc">Miscellaneous</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="intro">
+            <h1>Introduction</h1>
+            <p>Repository: <a href="https://github.com/ryo-yamada/tsua">github.com/ryo-yamada/tsua</a></p>
+                <p>Tsua is a tiny, minimalistic HTTP server framework built on top of LuaSocket.</p>
+                <p>The framework allows you to simply serve files and send data over HTTP for something like a website, such as a portfolio, without messing with raw, low-level HTTP too much. It works similar to Express.js or Python's Flask.</p>
+                <p>Because Lua's runtime is pretty small compared to something like Python+Flask, tsua runs well on stuff like old devices, a tiny VPS, or a Raspberry Pi Zero W.</p>
+                <p>Currently, tsua is experimental and only encouraged for static websites where dynamic activity is limited. Security hardening is something I want to gladly work towards. When deploying publicly with tsua, it is recommended that you run it in a containerized environment like Docker.</p>
+                <p><i>Fun fact: this site is hosted with tsua!</i></p>
+        </section>
+
+        <section id="requirements">
+            <h1>Requirements</h1>
+                <p>These are the criteria that must be met to use tsua:</p>
+                <ul>
+                    <li>A computer with an OS with a functional networking backend (Therefore microcontrollers won't work)</li>
+                    <li>Lua runtime</li>
+                    <li>LuaSocket (LuaRocks)</li>
+                </ul>
+                tsua is tested on Linux. It's probably functional on Windows and macOS too, but I haven't tested those platforms.
+        </section>
+
+        <section id="minimal-application">
+            <h1>Minimal Application</h1>
+                <p>This is what a minimal webserver with tsua could look like:</p>
+                <pre><code class="language-lua">local Tsua = require("tsua") -- 1
+local app = Tsua.new() -- 2
+
+app:get("/", function(req, res) -- 3
+    res:serve("./index.html") -- 4
+end)
+
+app:listen(19999) -- 5</code></pre>
+                <p>Well, what does this code do?</p>
+                <ol>
+                    <li>First, we require the tsua module file</li>
+                    <li>Then, we initialize a server instance to access tsua's functionality</li>
+                    <li>After that, we can compose a route (in this case, root) that takes GET requests</li>
+                    <li>This route then serves an <code>index.html</code> file that the client browser can display every time a GET request is made</li>
+                    <li>Finally, we set up the server to listen on a port, in this case port 19999.</li>
+                </ol>
+                <p>You can then save this file as something like <code>server.lua</code>, and run it with <code>lua server.lua</code>. Make sure lua and luarocks is installed, and that luasocket is installed through luarocks aswell.</p>
+        </section>
+
+        <section id="static-files">
+            <h1>Static Files</h1>
+                <p>Most web apps use static files for serving CSS, JS, images, etc. It's a way to serve files directly to the client without needing any specific route handling. Tsua makes it pretty simple. Create a directory called <code>static</code>, and place your desired files in it, for example, a <code>style.css</code> file.</p>
+                <p>In tsua, it would then be utilized and exposed like so:</p>
+                <code class="language-lua">app:static("/static", "./static")</code>
+                <p>And that's it! Tsua will now serve any static file(s) per usual, such as <code>/static/style.css</code></p>
+                <p>The first argument is the URL prefix, and the second one is the directory's name on disk.</p>
+                <p>Just so you know, static directories are always checked before route handlers. If a path matches a registered static directory, the static file gets served, and the route handler will not be executed.</p>
+                <p>And as a side note, the directory name doesn't NEED to be <code>static</code> specifically. You could do something like <code class="language-lua">app:static("/assets", "./public")</code>, no problem.</p>
+        </section>
+
+        <section id="methods">
+            <h1>HTTP methods</h1>
+                <p>The currently supported HTTP methods are:</p>
+                <ul>
+                    <li>GET</li>
+                    <li>POST</li>
+                    <li>PUT</li>
+                    <li>DELETE</li>
+                </ul>
+                <p>Contrary to some belief, each HTTP method isn't really all that different from the next. It's just a way for the server to know what to do with the data presented/requested.</p>
+                <p><i>Note: POST and PUT both include URL-encoded bodies.</i></p>
+        </section>
+
+        <section id="routing">
+            <h1>Routing</h1>
+                <p>Creating routes allows clients to interact with your server in ways you define. Each route you make must be assigned an HTTP method and a path.</p>
+                <p>It's common practice for backend developers to compose a GET route on root (<code>/</code>) and to serve an <code>index.html</code> page on that route. This could be used as a home page.</p>
+                <p>Like so:</p>
+                <pre><code class="language-lua">app:get("/", function(req, res)
+    res:serve("./index.html")
+    -- some other optional code
+end)</code></pre>
+                <p>It's important to know that the function in the route is a callback. So, whenever someone visits the root of your site on their browser, the code inside of the function will run. In the case above, the function's code serves an HTML file to the client that just connected.</p>
+        </section>
+
+        <section id="requests">
+            <h1>Requests (<code>req</code>)</h1>
+                <p>A request consists of data that a client sends when connecting or asking for resources on the server.</p>
+                <p>Naturally, this data can be parsed and manipulated and processed on the serverside however you want to. tsua helps you with this by providing the request's data as objects that you can access.</p>
+                <p>Here are all the request objects and example data:</p>
+                <pre><code class="language-lua">app:post("/sendcredentials", function(req, res)
+    req.method -- "POST"
+    req.path -- "/sendcredentials"
+    req.headers -- table of headers
+    req.body -- "key1=abc&key2=123"
+    req.params.key1 -- "abc"
+    req.query.name -- /sendcredentials?name=ryo -> "ryo"
+end)</code></pre>
+                <p>And here are descriptions for each object:</p>
+                <ul>
+                    <li><code>req.method</code> stores a string of the method type. Simple as that. Could be GET, POST, PUT, or whatever else tsua supports.</li>
+                    <li><code>req.path</code> stores a string of the path of the request. Could be root (<code>"/"</code>) or a specific page (<code>"/blog/my-first-post"</code>)</li>
+                    <li><code>req.headers</code> stores a table with a bunch of headers that the client could have sent. If no headers are sent, this table is empty.</li>
+                    <li><code>req.body</code> (POST/PUT ONLY) stores the body of the request. This body could be pretty much anything as long as it's URL-encoded. It should be noted that the server should have code to accept and process bodies.</li>
+                    <li><code>req.params</code> is pretty much an abstraction of <code>req.body</code>. It's populated with the objects of the URL-encoded POST and PUT body requests.</li>
+                    <li><code>req.query</code> is populated by parameters in the URL query string.</li>
+                </ul>
+                <p><i>Note: header names (<code>req.headers</code>) are converted to lower case by tsua</i></p>
+                <h3>EDGE CASE:</h3>
+                <p>There's also a <code>req.dyn</code> object that is only usable when dynamic routing is used. This means that, when a route is registered using the dynamic routing syntax, (e.g. <code>/&lt;page&gt;</code>) you'll be able to access and read the requested path like so: <code>req.dyn.page</code></p>
+        </section>
+
+        <section id="responses">
+            <h1>Responses (<code>res</code>)</h1>
+                <p>When a client connects and sends a request, you obviously need to respond, or else the client won't receive anything on their end whatsoever. So, tsua has a couple of helper functions implemented that make responding to a client easy. Each function serves their own purpose.</p>
+                <h2 id="res-send"><code>res:send()</code></h2>
+                    <p>This function is pretty self-explanatory. It sends any data when a client connects. Matter of fact, every other function that sends data (<code>res:serve()</code>, <code>res:redirect()</code>, ...) uses this function internally. It'd be pretty messy and annoying to write an instruction to redirect every time you want to, after all!</p>
+                    <p>Here's an example of how you'd use this function:</p>
+                    <pre><code class="language-lua">app:get("/hello", function(req, res)
+    res:send("200 OK", { ["Content-Type"] = "text/html; charset=UTF-8" }, "&lt;h1&gt;Hello from tsua&lt;/h1&gt;")
+end)</code></pre>
+                    <p>The first argument is the status code. Ideally, it should include the number-based status-code, and the text-based status-code.</p>
+                    <p>The second argument is the headers table. In the example above, the only header that is sent is the Content-Type header, which tells the browser or client what type of data the server sent. In this case, it's basic HTML in UTF-8 format. A browser would receive this and render the received HTML.</p>
+                    <p>The third argument is the actual data. Since the Content-Type is HTML in UTF-8, that's the type of data you'll have to pass through. In the case above, a simple header with some text would be received by the client's browser.</p>
+                <h2 id="res-serve"><code>res:serve()</code></h2>
+                    <p>This function is alot more useful for websites. It reads a file from disk, and then serves it to a client that connects. This means that you can have an HTML file on your disk and pass the path of that file into the function, and the page would render on the client's browser.</p>
+                    <p>Like so:</p>
+                    <pre><code class="language-lua">app:get("/", function(req, res)
+    res:serve("index.html")
+end)</code></pre>
+                    <p>That's pretty much all you have to do.</p>
+                <h2 id="res-redirect"><code>res:redirect()</code></h2>
+                    <p>This function is useful for when you want to redirect clients that connect with their browser from one page to another. That's about it.</p>
+                    <p>Here's an example:</p>
+                    <pre><code class="language-lua">app:get("/old-page", function(req, res)
+    res:redirect("/new-page")
+end)</code></pre>
+                    <p>Simple, right? There's only 1 argument, and it expects the path of the route you want to redirect a client to.</p>
+                    <p>Internally, it sends a 301 Moved Permanently status.</p>
+                <h2 id="res-json"><code>res:json()</code></h2>
+                    <p>This function is a bit more special. It's useful for building an API, but tsua does not and will not implement a json encoder. Therefore, you'll have to bring your own function and plug it in. It could be a function from a library, or your own personal function. Up to you.</p>
+                    <p>This is how you'd use it:</p>
+                    <pre><code class="language-lua">app:get("/api", function(req, res)
+    res:json(your_encode_function, some_data_in_table)
+end)</code></pre>
+                    <p>The first argument would be the json encoder function you obtained from anywhere.</p>
+                    <p>The second argument is the actual data you want to encode and send. This data's format must be a table.</p>
+                    <p>There's also an optional third argument, which is a status code you'd like to send to the client. If this is not supplied, it'll send a simple <code>200 OK</code>.</p>
+                <h2 id="res-escape"><code>res.escape()</code></h2>
+                    <p>This is less of a function that interacts with the client, but moreso with the data that you're planning to send, before you send it. It's recommended to apply this to user-supplied data before including it in any sort of HTML response, because otherwise you could send data in a format that you didn't expect to send.</p>
+                    <p>It's used like so:</p>
+                    <pre><code class="language-lua">app:get("/hello", function(req, res)
+    res:send("200 OK", { ["Content-Type"] = "text/html; charset=UTF-8" }, res.escape("&lt;thingymajig&gt;"))
+end)</code></pre>
+                    <p>In the case above, if the data in the function wasn't escaped first, the client's browser would receive it and get confused by assuming the <code>"&lt;thingymajig&gt;"</code> string is an HTML tag, and then it would error or just not display.</p>
+        </section>
+
+        <section id="config">
+            <h1>Configuration</h1>
+                <p>You can configure an instance from the framework and fine-tune it to how you want to. Here's an example of how you'd configure an instance, pay attention to the initialization:</p>
+                <pre><code class="language-lua">local Tsua = require("tsua")
+local app = Tsua.new({ -- init & config
+    max_headers = 15,
+    timeout = 2,
+    not_found = "./frontend/404.html"
+})
+
+app:static("/static", "./static")
+
+app:get("/", function(req, res)
+    res:serve("./frontend/index.html")
+end)</code></pre>
+                <p>These are all the configurable options, an occasional short description and their defaults:</p>
+                <pre><code class="language-lua">request_logging = config.request_logging ~= false, -- looks weird but it prevents unexpected behavior when setting a config, default is true
+max_body = config.max_body or (1024 * 1024), -- 1MB default max body in requests
+max_headers = config.max_headers or 30, -- default 30 max headers possible in requests
+timeout = config.timeout or 3, -- default 3s before dropping client
+error_handler = config.error_handler, -- custom error handler function config
+not_found = config.not_found,  -- path to a custom 404 html file, default is framework-provided page
+forbidden = config.forbidden, -- path to a custom 403 html file, default is framework-provided page
+internal_error = config.internal_error, -- path to a custom 500 html file, default is framework-provided page</code></pre>
+        </section>
+
+        <section id="misc">
+            <h1>Miscellaneous</h1>
+            <h2 id="contributing">Contributing</h2>
+                <p>Contribution is heavily encouraged, and I'm trying to keep tsua small and approachable for this reason</p>
+                <p>If you are:</p>
+                <ul>
+                    <li>learning lua</li>
+                    <li>interested in HTTP</li>
+                    <li>looking for something to contribute to</li>
+                </ul>
+                <p>then I'm looking forward to working with you.</p>
+                <p>Issues, pull requests, feature suggestions, and discussion are all appreciated. If you're looking to contribute but aren't sure how, you can check the <a href="https://github.com/ryo-yamada/tsua/issues">issue tracker</a>, in which I or others might post some issues for you to look into.</p>
+                <p>Development is currently focused on:</p>
+                <ul>
+                    <li>Core functionality</li>
+                    <li>Developer experience enhancements</li>
+                </ul>
+            <h2 id="philosophy">Philosophy</h2>
+                <p>This was a project I started just for fun, as I wanted to see how easy it would be to deliver a site over the web with a Lua backend. However, it started becoming its own little framework, and so I decided to publish it on GitHub. My plan is to continue developing it with a focus on simplicity.</p>
+                <p>This framework is aimed towards sites that don't have too much dynamic functionality. Portfolios, documentation, etc. However, I suppose when this framework continues development, it will probably be able to support more dynamic functionality.</p>
+            <h2 id="security">Security Policy</h2>
+                <p>If you think you've found a vulnerability for tsua, please reach out to me at <b>f@placeq.com</b>, and we'll continue speaking there.</p>
+                <p>When sending me an email, please provide details in the following structure:</p>
+                <ul>
+                    <li>Description of the issue</li>
+                    <li>How to reproduce</li>
+                    <li>Potential impact</li>
+                    <li>Suggested fix, if available</li>
+                </ul>
+                <p>Please do not publicly report or discuss security vulnerabilities.</p>
+        </section>
+    </main>
+</body>
+</html>

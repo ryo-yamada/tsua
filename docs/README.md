@@ -1,6 +1,5 @@
 # Documentation
-The documentation for tsua will soon be found on a site that I'll set up. When the documentation is complete enough to be usable, I'll deploy it. The `index.html` file can be rendered through a live server or an online renderer, if you want to make sure your changes look good.
-
+The documentation for tsua will soon be found on a site that I'll set up. When the documentation is complete enough to be usable, I'll deploy it. The `docs.html` file can be rendered through a live server or an online renderer if you wish to save/view it locally.
 The files in this folder exist so that contributors can easily submit PRs to improve or expand the documentation. Changes made to it will not be automatically published to the live documentation site. The website will be hosted separately, so I'll have to deploy it manually after every change.
 
 Some notes:
